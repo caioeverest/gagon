@@ -1,0 +1,24 @@
+{
+  "name": "gagon",
+  "version": "1.0.0",
+  "description": "punch out alexa interaction",
+  "main": "src/index.js",
+  "scripts": {
+    "deploy": "serverless deploy",
+    "testfy": "node src/test.js",
+    "local-invoke": "serverless invoke local --function alexa -p event_getMarksFromDayIntent.json"
+  },
+  "author": "Everest",
+  "license": "MIT",
+  "dependencies": {
+    "ask-sdk": "^2.10.0",
+    "axios": "^0.21.1",
+    "form-data": "^3.0.0",
+    "i18next": "^19.8.4",
+    "i18next-sprintf-postprocessor": "^0.2.2",
+    "winston": "^3.3.3"
+  },
+  "devDependencies": {
+    "serverless": "^2.19.0"
+  }
+}

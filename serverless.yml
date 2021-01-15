@@ -1,0 +1,22 @@
+service: gagon
+frameworkVersion: '2'
+
+provider:
+    name: aws
+    runtime: nodejs12.x
+    lambdaHashingVersion: 20201221
+
+functions:
+    alexa:
+        handler: src/index.handler
+        environment:
+            RIGHT_PAPER_HOST: ${env:RIGHT_PAPER_HOST}
+            RIGHT_PAPER_API_KEY: ${env:RIGHT_PAPER_API_KEY}
+            RIGHT_PAPER_TOKEN: ${env:RIGHT_PAPER_TOKEN}
+            RIGHT_PAPER_COMPANY_ID: ${env:RIGHT_PAPER_COMPANY_ID}
+            RIGHT_PAPER_APP_ID: ${env:RIGHT_PAPER_APP_ID}
+            RIGHT_PAPER_LAT_LON: ${env:RIGHT_PAPER_LAT_LON}
+            IS_TEST: ${env:IS_TEST}
+        events:
+            - alexaSkill: ${env:SKILL_ADDR}
+
