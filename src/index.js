@@ -32,22 +32,16 @@ const GetMarksFromDayIntentHandler = {
     const requestAttributes = handlerInput.attributesManager.getRequestAttributes()
     const dateRaw = Alexa.getSlotValue(handlerInput.requestEnvelope, 'date')
 
-    try {
-      const date = new Date(`${dateRaw}T12:00:00-06:00`)
-      const marksRaw = await service.loadMarksOf(date)
-      const marks = marksRaw.map(m => m.hour)
-      const speechText = marks.length === 0
-        ? requestAttributes.t('EMPTY_MARKS', date)
-        : requestAttributes.t('READING_MARKS', dateRaw, marks.join(', '))
+    const date = new Date(`${dateRaw}T12:00:00-06:00`)
+    const marksRaw = await service.loadMarksOf(date)
+    const marks = marksRaw.map(m => m.hour)
+    const speechText = marks.length === 0
+      ? requestAttributes.t('EMPTY_MARKS', date)
+      : requestAttributes.t('READING_MARKS', dateRaw, marks.join(', '))
 
-      return handlerInput.responseBuilder
-        .speak(speechText)
-        .getResponse()
-    } catch(e) {
-      return handlerInput.responseBuilder
-        .speak(requestAttributes.t('ERROR_MSG', e.message))
-        .getResponse()
-    }
+    return handlerInput.responseBuilder
+      .speak(speechText)
+      .getResponse()
   }
 }
 
@@ -61,21 +55,15 @@ const StartPunchCardIntentHandler = {
   },
 
   async handle(handlerInput) {
-    try {
-      const requestAttributes = handlerInput.attributesManager.getRequestAttributes()
-      const marks = await service.loadMarksOfToday()
-      const punchType = marks.length === 1 ? requestAttributes.t('IN') : requestAttributes.t('OUT')
-      const speechText = requestAttributes.t('CONFIRMATION_MSG', punchType)
+    const requestAttributes = handlerInput.attributesManager.getRequestAttributes()
+    const marks = await service.loadMarksOfToday()
+    const punchType = marks.length === 1 ? requestAttributes.t('IN') : requestAttributes.t('OUT')
+    const speechText = requestAttributes.t('CONFIRMATION_MSG', punchType)
 
-      return handlerInput.responseBuilder
-        .speak(speechText)
-        .reprompt(speechText)
-        .getResponse()
-    } catch(e) {
-      return handlerInput.responseBuilder
-        .speak(requestAttributes.t('ERROR_MSG', e.message))
-        .getResponse()
-    }
+    return handlerInput.responseBuilder
+      .speak(speechText)
+      .reprompt(speechText)
+      .getResponse()
   }
 }
 
@@ -85,26 +73,51 @@ const CompletedPunchCardIntentHandler = {
     const intent = request.intent
     return request.type === 'IntentRequest'
       && request.intent.name === 'PunchCardIntentHandler'
-      && request.dialogState === 'IN_PROGRESS'
+      && request.dialogState === 'COMPLETED'
   },
 
   handle(handlerInput) {
-    try {
-      const requestAttributes = handlerInput.attributesManager.getRequestAttributes()
-      const speechText = handlerInput.intent.confirmationStatus === "CONFIRMED"
-        ? requestAttributes.t('GOODBYE_MARKED_MSG')
-        : requestAttributes.t('GOODBYE_NOT_MARKED_MSG')
+    const requestAttributes = handlerInput.attributesManager.getRequestAttributes()
+    await service.punch()
+    const speechText = handlerInput.intent.confirmationStatus === "CONFIRMED"
+      ? requestAttributes.t('GOODBYE_MARKED_MSG')
+      : requestAttributes.t('GOODBYE_NOT_MARKED_MSG')
 
-      return handlerInput.responseBuilder
-        .speak(speechText)
-        .getResponse()
-    } catch(e) {
-      return handlerInput.responseBuilder
-        .speak(requestAttributes.t('ERROR_MSG', e.message))
-        .getResponse()
-    }
+    return handlerInput.responseBuilder
+      .speak(speechText)
+      .getResponse()
   }
 }
+
+const HelpIntentHandler = {
+  canHandle(handlerInput) {
+    return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
+      && Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.HelpIntent'
+  },
+  handle(handlerInput) {
+    const requestAttributes = handlerInput.attributesManager.getRequestAttributes()
+    const speakOutput = requestAttributes.t('HELP')
+
+    return handlerInput.responseBuilder
+      .speak(speakOutput)
+      .reprompt(speakOutput)
+      .getResponse()
+  }
+};
+const CancelAndStopIntentHandler = {
+  canHandle(handlerInput) {
+    return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
+      && (Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.CancelIntent'
+        || Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.StopIntent')
+  },
+  handle(handlerInput) {
+    const requestAttributes = handlerInput.attributesManager.getRequestAttributes()
+    const speakOutput = requestAttributes.t('CANCEL_MSG')
+    return handlerInput.responseBuilder
+      .speak(speakOutput)
+      .getResponse()
+  }
+};
 
 const ErrorHandler = {
   canHandle() {
@@ -129,6 +142,8 @@ exports.handler = Alexa.SkillBuilders
     GetMarksFromDayIntentHandler,
     StartPunchCardIntentHandler,
     CompletedPunchCardIntentHandler,
+    HelpIntentHandler,
+    CancelAndStopIntentHandler,
   )
   .addRequestInterceptors(LocalizationInterceptor)
   .addErrorHandlers(ErrorHandler)
