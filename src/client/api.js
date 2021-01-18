@@ -24,9 +24,8 @@ exports.punchCard = async date => {
     const res = await axios.post(endpoint, form, { headers: form.getHeaders() })
 
     logger.info(`API return: ${JSON.stringify(res.data)}`)
-    const marks = res.data.Dia.HorariosMarcacoes
 
-    return marks.map(h => { return {day: h.Dia, hour: h.Hora} })
+    return res.data
   } catch(e) {
     logger.error(`api return error ${e.message}`)
     throw new Error({info: JSON.stringify(e.response.data), status: e.response.status})
