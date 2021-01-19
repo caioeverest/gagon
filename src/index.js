@@ -67,21 +67,40 @@ const StartPunchCardIntentHandler = {
   }
 }
 
-const CompletedPunchCardIntentHandler = {
+const CompletedConfirmedPunchCardIntentHandler = {
   canHandle(handlerInput) {
     const request = handlerInput.requestEnvelope.request
     const intent = request.intent
     return request.type === 'IntentRequest'
       && request.intent.name === 'PunchCardIntentHandler'
       && request.dialogState === 'COMPLETED'
+      && request.intent.confirmationStatus === 'CONFIRMED'
   },
 
-  handle(handlerInput) {
+  async handle(handlerInput) {
     const requestAttributes = handlerInput.attributesManager.getRequestAttributes()
-    await service.punch()
-    const speechText = handlerInput.intent.confirmationStatus === "CONFIRMED"
-      ? requestAttributes.t('GOODBYE_MARKED_MSG')
-      : requestAttributes.t('GOODBYE_NOT_MARKED_MSG')
+    const speechText = requestAttributes.t('GOODBYE_MARKED_MSG')
+    service.punch()
+
+    return handlerInput.responseBuilder
+      .speak(speechText)
+      .getResponse()
+  }
+}
+
+const CompletedDeniedPunchCardIntentHandler = {
+  canHandle(handlerInput) {
+    const request = handlerInput.requestEnvelope.request
+    const intent = request.intent
+    return request.type === 'IntentRequest'
+      && request.intent.name === 'PunchCardIntentHandler'
+      && request.dialogState === 'COMPLETED'
+      && request.intent.confirmationStatus !== 'CONFIRMED'
+  },
+
+  async handle(handlerInput) {
+    const requestAttributes = handlerInput.attributesManager.getRequestAttributes()
+    const speechText = requestAttributes.t('GOODBYE_NOT_MARKED_MSG')
 
     return handlerInput.responseBuilder
       .speak(speechText)
@@ -103,7 +122,8 @@ const HelpIntentHandler = {
       .reprompt(speakOutput)
       .getResponse()
   }
-};
+}
+
 const CancelAndStopIntentHandler = {
   canHandle(handlerInput) {
     return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
@@ -117,7 +137,7 @@ const CancelAndStopIntentHandler = {
       .speak(speakOutput)
       .getResponse()
   }
-};
+}
 
 const ErrorHandler = {
   canHandle() {
@@ -125,7 +145,10 @@ const ErrorHandler = {
   },
   handle(handlerInput, error) {
     const requestAttributes = handlerInput.attributesManager.getRequestAttributes()
-    logger.error(`Error handled: ${error.stack}`)
+    logger.error(`Error handled: ${error.stack}`, {
+      intent_name: Alexa.getIntentName(handlerInput.requestEnvelope),
+      dialog_state: Alexa.getDialogState(handlerInput.requestEnvelope),
+    })
     const speakOutput = requestAttributes.t('ERROR_MSG', error.message)
 
     return handlerInput.responseBuilder
@@ -141,7 +164,8 @@ exports.handler = Alexa.SkillBuilders
     LaunchRequestHandler,
     GetMarksFromDayIntentHandler,
     StartPunchCardIntentHandler,
-    CompletedPunchCardIntentHandler,
+    CompletedConfirmedPunchCardIntentHandler,
+    CompletedDeniedPunchCardIntentHandler,
     HelpIntentHandler,
     CancelAndStopIntentHandler,
   )
