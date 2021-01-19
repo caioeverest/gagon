@@ -6,7 +6,7 @@
   "scripts": {
     "deploy": "serverless deploy",
     "testfy": "node src/test.js",
-    "local-invoke": "serverless invoke local --function alexa -p event_getMarksFromDayIntent.json"
+    "local-invoke": "serverless invoke local --function alexa"
   },
   "author": "Everest",
   "license": "MIT",
